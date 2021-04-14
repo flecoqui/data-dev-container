@@ -1,0 +1,61 @@
+name: $(Date:yyyyMMdd)$(Rev:.r) # build numbering format
+
+trigger:
+  branches:
+    include:
+      - "main"
+  paths:
+    include:
+      - pipelines/azure-dev-ops/azure-pipelines.devcontainer-infrastructure.yml
+      - pipelines/azure-dev-ops/templates/azure-container-registry-infrastructure-pipeline.template.yml
+      - pipelines/azure-dev-ops/templates/azure-databricks-infrastructure-pipeline.template.yml
+      - pipelines/azure-dev-ops/templates/deployment-gate.yml
+      - pipelines/utils/deploy-acr.sh
+      - pipelines/utils/deploy-databricks.sh
+      - pipelines/utils/common-script.sh
+      - pipelines/utils/utils.sh
+      
+
+pr: none
+
+pool:
+  vmImage: "ubuntu-18.04"
+
+variables:
+  - group: dev
+
+stages:
+  - stage: AzureContainerRegistry
+    displayName: Azure Container Registry
+    variables:
+      - group: dev
+    jobs:
+    - template: templates/azure-container-registry-infrastructure-pipeline.template.yml
+      parameters:
+        serviceConnection: $(serviceConnection)
+        subscriptionId: $(subscriptionId)
+        businessUnit: $(businessUnit)
+        serviceName: $(serviceName)
+        environment: dev
+        region: $(globalRegion)
+        tags: $(tags)
+  - stage: AzureDatabricks
+    displayName: Azure Databricks
+    variables:
+      - group: dev
+    jobs:
+    - template: templates/azure-databricks-infrastructure-pipeline.template.yml
+      parameters:
+        serviceConnection: $(serviceConnection)
+        subscriptionId: $(subscriptionId)
+        businessUnit: $(businessUnit)
+        serviceName: $(serviceName)
+        environment: dev
+        region: $(globalRegion)
+        tags: $(tags)
+        databricksClusterSparkVersion: $(databricksClusterSparkVersion)
+        databricksClusterNodeType: $(databricksClusterNodeType)
+        databricksClusterName: $(databricksClusterName)
+        databricksClusterMinWorkers: $(databricksClusterMinWorkers)
+        databricksClusterMaxWorkers: $(databricksClusterMaxWorkers)
+        databricksClusterAutoTerminationMinutes: $(databricksClusterAutoTerminationMinutes)        

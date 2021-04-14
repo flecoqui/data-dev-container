@@ -1,0 +1,63 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "pricingTier": {
+      "defaultValue": "premium",
+      "allowedValues": [
+        "trial",
+        "standard",
+        "premium"
+      ],
+      "type": "string",
+      "metadata": {
+        "description": "The pricing tier of workspace."
+      }
+    },
+    "workspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Azure Databricks workspace to create."
+      }
+    },
+    "tags": {
+      "defaultValue": "",
+      "type": "object",
+      "metadata": {
+        "description": "The tags associated with databricks."
+      }
+    },
+    "managedResourceGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the managed resource group."
+      }
+    }
+  },
+  "variables": {
+    "managedResourceGroupId": "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('managedResourceGroupName'))]",
+    "location": "[resourceGroup().location]" 
+  },
+  "resources": [
+    {
+      "apiVersion": "2018-04-01",
+      "type": "Microsoft.Databricks/workspaces",
+      "location": "[variables('location')]",
+      "tags": "[parameters('tags')]",
+      "name": "[parameters('workspaceName')]",
+      "sku": {
+        "name": "[parameters('pricingTier')]"
+      },
+      "comments": "The managed resource group specified will be locked after deployment.",
+      "properties": {
+        "ManagedResourceGroupId": "[variables('managedResourceGroupId')]"        
+      }
+    }
+  ],
+  "outputs": {
+    "workspaceUrl": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Databricks/workspaces', parameters('workspaceName'))).workspaceUrl]"
+    }
+  } 
+}

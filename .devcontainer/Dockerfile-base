@@ -1,0 +1,59 @@
+FROM continuumio/miniconda3:latest
+
+ARG USERNAME=userddc
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+
+# Create the user
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
+
+RUN apt-get update \
+    && apt-get install -y gnupg software-properties-common
+
+RUN wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key add - \
+    && add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ \
+    && add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/
+
+# apt stuff
+RUN apt-get update \
+    && export DEBIAN_FRONTEND=noninteractive \
+    # install missing packages
+    && mkdir -p /usr/share/man/man1 \
+    && apt-get install -y sudo git curl make procps lsb-release vim jq libicu[0-9][0-9] adoptopenjdk-8-hotspot python3-distutils \
+    # add sudo support
+    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+    && chmod 0440 /etc/sudoers.d/$USERNAME \
+    # install azure-cli
+    && curl -sL https://aka.ms/InstallAzureCLIDeb | bash \
+    # Need this to use environment variables for databricks-connect setting
+    # https://forums.databricks.com/questions/21536/databricks-connect-configuration-not-possible-with.html
+    && echo '{}' > /home/$USERNAME/.databricks-connect
+
+# install openjdk 1.8
+ENV JAVA_HOME=/usr/lib/jvm/adoptopenjdk-8-hotspot-amd64/jre/
+
+# change conda to be owned by the user
+RUN chown -R $USERNAME:$USERNAME /opt/conda
+
+# now everything from here uses the normal user
+USER $USERNAME
+
+# configure az cli to automatically install extension
+RUN az config set extension.use_dynamic_install=yes_without_prompt
+
+# copy requirements
+COPY ./requirements_*.txt ./labextensions.txt /home/$USERNAME/
+
+# init conda 
+RUN conda init bash 
+
+# install tox, pre-commit and detect-secrets
+RUN pip install tox==3.21.3 pre-commit==2.10.0 detect-secrets==1.0.3 
+    
+# back to default shell
+SHELL ["/bin/sh", "-c"]
+
+
+
+CMD [ "sleep", "infinity" ]

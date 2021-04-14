@@ -1,0 +1,22 @@
+{
+    "cluster_id": "<databricksClusterId>",
+    "cluster_name": "<databricksClusterName>",
+    "spark_version": "<databricksClusterSparkVersion>",
+    "autoscale": {
+        "min_workers": <databricksClusterMinWorkers>,
+        "max_workers": <databricksClusterMaxWorkers>
+    },
+    "spark_conf": {
+        "spark.databricks.repl.allowedLanguages": "sql,python,r",
+        "spark.databricks.cluster.profile": "serverless",
+        "spark.databricks.delta.preview.enabled": "true",
+        "spark.databricks.conda.condaMagic.enabled": "true"
+    },
+    "node_type_id": "<databricksClusterNodeType>",
+    "driver_node_type_id": "<databricksClusterNodeType>",
+    "custom_tags": {
+        "ResourceClass": "Serverless"
+    },
+    "autotermination_minutes": <databricksClusterAutoTerminationMinutes>,
+    "enable_elastic_disk": true
+}

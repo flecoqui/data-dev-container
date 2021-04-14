@@ -1,0 +1,108 @@
+parameters:
+  subscriptionId: ""
+  serviceConnection: ""
+  businessUnit: ""
+  serviceName: ""
+  environment: ""
+  region: ""
+  repositoryUrl: ""
+  dockerfilePath: ""
+  repositoryToken: ""
+  imageNamePrefix: ""
+  basePipVersion: ""
+  localsparkPipVersion: ""
+  dbjlabPipVersion: ""   
+  dbconnectPipVersion: ""  
+  suffix: "" 
+
+jobs:
+  - job: BuildDevContainerImage${{ parameters.suffix }}
+    displayName: Build DevContainer Image  ${{ parameters.imageNamePrefix }}-${{ parameters.suffix }}
+    steps:
+      - task: AzureCLI@2
+        displayName: Build DevContainer Image ${{ parameters.imageNamePrefix }}-${{ parameters.suffix }}
+        inputs:
+          azureSubscription: ${{ parameters.serviceConnection }}
+          scriptType: "bash"
+          scriptLocation: "scriptPath"
+          scriptPath: "./pipelines/utils/buildimage.sh"
+          arguments: "-s ${{ parameters.subscriptionId}} \
+          -u ${{ parameters.businessUnit }} \
+          -a ${{ parameters.serviceName }} \
+          -e ${{ parameters.environment }} \
+          -r ${{ parameters.region }} \
+          -o ${{ parameters.repositoryUrl }} \
+          -d ${{ parameters.dockerfilePath }} \
+          -k ${{ parameters.repositoryToken }} \
+          -i ${{ parameters.imageNamePrefix }}-${{ parameters.suffix }} "
+
+      - task: AzureCLI@2
+        displayName: Test DevContainer Image ${{ parameters.imageNamePrefix }}-${{ parameters.suffix }}
+        inputs:
+          azureSubscription: ${{ parameters.serviceConnection }}
+          scriptType: "bash"
+          scriptLocation: inlineScript
+          inlineScript: |
+              az --version
+              echo "az acr login --name $(ACRNAME)"
+              az acr login --name $(ACRNAME) 
+              echo "docker pull $(ACRDNSNAME)/$(IMAGENAMEID)"
+              docker pull $(ACRDNSNAME)/$(IMAGENAMEID)
+              echo "docker run $(ACRDNSNAME)/$(IMAGENAMEID) /opt/conda/bin/pip --version"
+              pipVersion=$(docker run $(ACRDNSNAME)/$(IMAGENAMEID) /opt/conda/bin/pip --version)
+              if [[ $pipVersion != $basePipVersion* ]]
+              then
+                echo "base pip version $pipVersion not the one expected"
+                exit 1
+              fi
+              echo "pip version for /opt/conda/bin/pip $pipVersion"
+              if [[ "${{ parameters.imageNamePrefix }}-${{ parameters.suffix }}" == *all ]] || [[ "${{ parameters.imageNamePrefix }}-${{ parameters.suffix }}" == *db_connect ]]
+              then
+                pipVersion=$(docker run $(ACRDNSNAME)/$(IMAGENAMEID) conda run -n db-connect /bin/bash -c "pip --version" )
+                if [[ $pipVersion != $dbconnectPipVersion* ]]
+                then
+                  echo "db-connect pip version $pipVersion not the one expected"
+                  exit 1
+                fi
+                echo "pip version for db-connect $pipVersion"
+              fi
+              if [[ "${{ parameters.imageNamePrefix }}-${{ parameters.suffix }}" == *all ]] || [[ "${{ parameters.imageNamePrefix }}-${{ parameters.suffix }}" == *db_jlab ]]
+              then
+                pipVersion=$(docker run $(ACRDNSNAME)/$(IMAGENAMEID) conda run -n db-jlab /bin/bash -c "pip --version" )
+                if [[ $pipVersion != $dbjlabPipVersion* ]]
+                then              
+                  echo "db-jlab pip version $pipVersion not the one expected"
+                  exit 1
+                fi
+                echo "pip version for db-jlab $pipVersion"
+              fi
+              if [[ "${{ parameters.imageNamePrefix }}-${{ parameters.suffix }}" == *all ]] || [[ "${{ parameters.imageNamePrefix }}-${{ parameters.suffix }}" == *localspark ]]
+              then
+                pipVersion=$(docker run $(ACRDNSNAME)/$(IMAGENAMEID) conda run -n localspark /bin/bash -c "pip --version" )
+                if [[ $pipVersion != $localsparkPipVersion* ]]
+                then
+                  echo "localspark pip version $pipVersion not the one expected"
+                  exit 1
+                fi
+                echo "pip version for localspark $pipVersion"
+              fi
+              
+      - task: AzureCLI@2
+        displayName: Udpade Image Tag ${{ parameters.imageNamePrefix }}-${{ parameters.suffix }}
+        inputs:
+          azureSubscription: ${{ parameters.serviceConnection }}
+          scriptType: "bash"
+          scriptLocation: inlineScript
+          inlineScript: |
+              az --version
+              az acr login
+              echo "Untag latest image ${{ parameters.imageNamePrefix }}-${{ parameters.suffix }}:latest in $(ACRNAME)"
+              az acr repository  untag  -n $(ACRNAME)  --image ${{ parameters.imageNamePrefix }}-${{ parameters.suffix }}:latest 
+              echo "Create new latest image ${{ parameters.imageNamePrefix }}-${{ parameters.suffix }}:latest in $(ACRNAME) from $(ACRDNSNAME)/$(IMAGENAMEID)"
+              az acr  import  -n $(ACRNAME) --source $(ACRDNSNAME)/$(IMAGENAMEID) --image ${{ parameters.imageNamePrefix }}-${{ parameters.suffix }}:latest
+              echo "Pull new latest image $(ACRDNSNAME)/${{ parameters.imageNamePrefix }}-${{ parameters.suffix }}:latest"
+              docker pull $(ACRDNSNAME)/${{ parameters.imageNamePrefix }}-${{ parameters.suffix }}:latest
+
+
+
+                

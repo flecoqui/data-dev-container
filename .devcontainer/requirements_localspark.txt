@@ -1,0 +1,5 @@
+ipykernel==5.3.4
+pyspark==3.0.1
+numpy==1.19.2
+pandas==1.0.1
+koalas==1.6.0

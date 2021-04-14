@@ -1,0 +1,47 @@
+{
+  "name": "Data Dev Container ${FLAVOR}-prebuilt",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "workspace-${FLAVOR}-prebuilt",
+  "context": "..",
+  "workspaceFolder": "/workspace",
+  "settings": {
+    "python.formatting.provider": "black",
+    "python.linting.banditEnabled": true,
+    "python.linting.enabled": true,
+    "python.linting.flake8Enabled": true,
+    "python.linting.flake8Args": [
+      "--append-config=${containerWorkspaceFolder}/configs/.flake8.cfg"
+    ],
+    "python.linting.mypyEnabled": true,
+    "python.linting.pydocstyleEnabled": true,
+    "python.linting.pylintEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": [
+      "tests"
+    ],
+    "python.sortImports.args": [
+      "--settings-path=${containerWorkspaceFolder}/configs/.isort.cfg"
+    ],
+    "terminal.integrated.inheritEnv": false,
+    "terminal.integrated.shell.linux": "/bin/bash",
+    "[python]": {
+      "editor.formatOnSave": true,
+      "editor.codeActionsOnSave": {
+        "source.organizeImports": true
+      },
+      "files.trimTrailingWhitespace": true
+    }
+  },
+  "extensions": [
+    "ms-python.python",
+    "paiqo.databricks-vscode",
+    "yzhang.markdown-all-in-one",
+    "njpwerner.autodocstring",
+    "grapecity.gc-excelviewer",
+    "tomoyukim.vscode-mermaid-editor",
+    "ms-vsliveshare.vsliveshare-pack",
+    "eamodio.gitlens",
+    "DavidAnson.vscode-markdownlint"
+  ],
+  "postAttachCommand": "mkdir -p /home/$(id -un)/.ssh && touch /home/$(id -un)/.ssh/config && bash utils/install-detect-secrets-pre-commit.sh"
+}

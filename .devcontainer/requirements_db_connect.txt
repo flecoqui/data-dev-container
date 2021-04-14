@@ -1,0 +1,3 @@
+ipykernel==5.3.4
+databricks-connect==7.3.5
+pandas==1.1.3

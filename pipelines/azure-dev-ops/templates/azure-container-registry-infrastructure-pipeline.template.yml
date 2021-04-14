@@ -1,0 +1,31 @@
+parameters:
+  subscriptionId: ""
+  serviceConnection: ""
+  businessUnit: "contoso"
+  serviceName: "deco"
+  environment: ""
+  region: ""
+  tags: ""
+
+jobs:
+  - template: deployment-gate.yml
+    parameters:
+      environment: ${{ parameters.environment }}
+
+  - job: DeployContainerRegistry
+    displayName: Deploy Container Registry
+    steps:
+      - task: AzureCLI@2
+        displayName: Deploy Container Registry
+        inputs:
+          azureSubscription: ${{ parameters.serviceConnection }}
+          scriptType: "bash"
+          scriptLocation: "scriptPath"
+          scriptPath: "./pipelines/utils/deploy-acr.sh"
+          arguments: "-s ${{ parameters.subscriptionId}} \
+          -u ${{ parameters.businessUnit }} \
+          -a ${{ parameters.serviceName }} \
+          -e ${{ parameters.environment }} \
+          -r ${{ parameters.region }} \
+          -t \"${{ parameters.tags }}\" "
+

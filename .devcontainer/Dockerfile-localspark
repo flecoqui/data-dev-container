@@ -1,0 +1,47 @@
+# ARG for local image 
+ARG ACRLOGINSERVER=
+ARG PREFIX=data-dev-container_devcontainer_workspace
+ARG SEPARATOR=
+
+FROM $ACRLOGINSERVER$SEPARATOR$PREFIX-base:latest
+
+# install gcc and build-essential for installing alibi-detect for concept drift
+RUN sudo apt-get update
+RUN sudo apt-get install --reinstall gcc build-essential ffmpeg libsm6 libxext6 -y
+
+ARG USERNAME=userddc
+
+# now everything from here uses the normal user
+USER $USERNAME
+
+# configure az cli to automatically install extension
+RUN az config set extension.use_dynamic_install=yes_without_prompt
+
+# copy requirements
+COPY ./requirements_*.txt ./labextensions.txt /home/$USERNAME/
+
+# init conda and create all conda environments
+RUN conda init bash \
+    && conda create -n localspark python=3.7.3 -y 
+
+# configure environment localspark
+SHELL ["conda", "run", "-n", "localspark", "/bin/bash", "-c"]
+
+RUN pip install -r /home/$USERNAME/requirements_shared.txt \ 
+    && pip install -r /home/$USERNAME/requirements_localspark.txt \ 
+    && python -m ipykernel install --user --name=LocalPyspark \
+    && mkdir /opt/conda/envs/localspark/lib/python3.7/site-packages/pyspark/conf \
+    && echo  "spark.driver.memory 8g" >> /opt/conda/envs/localspark/lib/python3.7/site-packages/pyspark/conf/spark-defaults.conf \ 
+    && echo  "spark.jars.packages=io.delta:delta-core_2.12:0.7.0" >> /opt/conda/envs/localspark/lib/python3.7/site-packages/pyspark/conf/spark-defaults.conf \ 
+    && echo  "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" >> /opt/conda/envs/localspark/lib/python3.7/site-packages/pyspark/conf/spark-defaults.conf \ 
+    && echo  "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" >> /opt/conda/envs/localspark/lib/python3.7/site-packages/pyspark/conf/spark-defaults.conf 
+
+
+# back to default shell
+SHELL ["/bin/sh", "-c"]
+
+# update jupyter logos
+COPY ./logos/localspark-logo-32x32.png /home/$USERNAME/.local/share/jupyter/kernels/localpyspark/logo-32x32.png
+COPY ./logos/localspark-logo-64x64.png /home/$USERNAME/.local/share/jupyter/kernels/localpyspark/logo-64x64.png
+
+CMD [ "sleep", "infinity" ]

@@ -1,0 +1,137 @@
+name: $(Date:yyyyMMdd)$(Rev:.r) # build numbering format
+
+trigger:
+  branches:
+    include:
+      - "master"
+  paths:
+    include:
+      - pipelines/azure-dev-ops/azure-pipelines.devcontainer-build.yml
+      - pipelines/azure-dev-ops/templates/devcontainer-build-pipeline.template.yml
+      - pipelines/utils/buildimage.sh
+      - .devcontainer/*
+      
+pr: none
+
+pool:
+  vmImage: "ubuntu-18.04"
+
+variables:
+  - group: dev
+
+stages:
+  - stage: BaseDevContainer
+    displayName: BaseDevContainer
+    variables:
+      - group: dev
+    jobs:
+    - template: templates/devcontainer-build-pipeline.template.yml
+      parameters:
+        serviceConnection: $(serviceConnection)
+        subscriptionId: $(subscriptionId)
+        businessUnit: $(businessUnit)
+        serviceName: $(serviceName)
+        environment: dev
+        region: $(globalRegion)
+        repositoryUrl: $(repositoryUrl)
+        dockerfilePath: "$(dockerFilePrefix)-base"
+        repositoryToken: $(repositoryToken)
+        imageNamePrefix: "$(imageNamePrefix)"
+        basePipVersion: $(basePipVersion)
+        localsparkPipVersion: $(localsparkPipVersion)
+        dbjlabPipVersion: $(dbjlabPipVersion)   
+        dbconnectPipVersion: $(dbconnectPipVersion) 
+        suffix: "base"     
+
+  - stage: AllDevContainer
+    displayName: AllDevContainer
+    variables:
+      - group: dev
+    jobs:
+    - template: templates/devcontainer-build-pipeline.template.yml
+      parameters:
+        serviceConnection: $(serviceConnection)
+        subscriptionId: $(subscriptionId)
+        businessUnit: $(businessUnit)
+        serviceName: $(serviceName)
+        environment: dev
+        region: $(globalRegion)
+        repositoryUrl: $(repositoryUrl)
+        dockerfilePath: "$(dockerFilePrefix)-all"
+        repositoryToken: $(repositoryToken)
+        imageNamePrefix: "$(imageNamePrefix)"
+        basePipVersion: $(basePipVersion)
+        localsparkPipVersion: $(localsparkPipVersion)
+        dbjlabPipVersion: $(dbjlabPipVersion)   
+        dbconnectPipVersion: $(dbconnectPipVersion) 
+        suffix: "all"     
+
+
+  - stage: DbConnectDevContainer
+    displayName: DbConnectDevContainer
+    variables:
+      - group: dev
+    jobs:
+    - template: templates/devcontainer-build-pipeline.template.yml
+      parameters:
+        serviceConnection: $(serviceConnection)
+        subscriptionId: $(subscriptionId)
+        businessUnit: $(businessUnit)
+        serviceName: $(serviceName)
+        environment: dev
+        region: $(globalRegion)
+        repositoryUrl: $(repositoryUrl)
+        dockerfilePath: "$(dockerFilePrefix)-db_connect"
+        repositoryToken: $(repositoryToken)
+        imageNamePrefix: "$(imageNamePrefix)"
+        basePipVersion: $(basePipVersion)
+        localsparkPipVersion: $(localsparkPipVersion)
+        dbjlabPipVersion: $(dbjlabPipVersion)   
+        dbconnectPipVersion: $(dbconnectPipVersion)         
+        suffix: "db_connect"     
+
+  - stage: DbJlabDevContainer
+    displayName: DbJlabDevContainer
+    variables:
+      - group: dev
+    jobs:
+    - template: templates/devcontainer-build-pipeline.template.yml
+      parameters:
+        serviceConnection: $(serviceConnection)
+        subscriptionId: $(subscriptionId)
+        businessUnit: $(businessUnit)
+        serviceName: $(serviceName)
+        environment: dev
+        region: $(globalRegion)
+        repositoryUrl: $(repositoryUrl)
+        dockerfilePath: "$(dockerFilePrefix)-db_jlab"
+        repositoryToken: $(repositoryToken)
+        imageNamePrefix: "$(imageNamePrefix)"
+        basePipVersion: $(basePipVersion)
+        localsparkPipVersion: $(localsparkPipVersion)
+        dbjlabPipVersion: $(dbjlabPipVersion)   
+        dbconnectPipVersion: $(dbconnectPipVersion)         
+        suffix: "db_jlab"     
+
+  - stage: LocalSparkDevContainer
+    displayName: LocalSparkDevContainer
+    variables:
+      - group: dev
+    jobs:
+    - template: templates/devcontainer-build-pipeline.template.yml
+      parameters:
+        serviceConnection: $(serviceConnection)
+        subscriptionId: $(subscriptionId)
+        businessUnit: $(businessUnit)
+        serviceName: $(serviceName)
+        environment: dev
+        region: $(globalRegion)
+        repositoryUrl: $(repositoryUrl)
+        dockerfilePath: "$(dockerFilePrefix)-localspark"
+        repositoryToken: $(repositoryToken)
+        imageNamePrefix: "$(imageNamePrefix)"
+        basePipVersion: $(basePipVersion)
+        localsparkPipVersion: $(localsparkPipVersion)
+        dbjlabPipVersion: $(dbjlabPipVersion)   
+        dbconnectPipVersion: $(dbconnectPipVersion)    
+        suffix: "localspark"     

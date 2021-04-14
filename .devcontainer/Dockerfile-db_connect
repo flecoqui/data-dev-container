@@ -1,0 +1,37 @@
+# ARG for local image 
+ARG ACRLOGINSERVER=
+ARG PREFIX=data-dev-container_devcontainer_workspace
+ARG SEPARATOR=
+
+FROM $ACRLOGINSERVER$SEPARATOR$PREFIX-base:latest
+
+
+ARG USERNAME=userddc
+
+# now everything from here uses the normal user
+USER $USERNAME
+
+# configure az cli to automatically install extension
+RUN az config set extension.use_dynamic_install=yes_without_prompt
+
+# copy requirements
+COPY ./requirements_*.txt ./labextensions.txt /home/$USERNAME/
+
+# init conda and create all conda environments
+RUN  conda init bash \
+    && conda create -n db-connect python=3.7.3 -y 
+
+# configure environment db-connect
+SHELL ["conda", "run", "-n", "db-connect", "/bin/bash", "-c"]
+RUN pip install -r /home/$USERNAME/requirements_shared.txt \
+    && pip install -r /home/$USERNAME/requirements_db_connect.txt \
+    && python -m ipykernel install --user --name=DataBricksConnect
+
+# back to default shell
+SHELL ["/bin/sh", "-c"]
+
+# update jupyter logos
+COPY ./logos/databricks-logo-32x32.png /home/$USERNAME/.local/share/jupyter/kernels/databricksconnect/logo-32x32.png
+COPY ./logos/databricks-logo-64x64.png /home/$USERNAME/.local/share/jupyter/kernels/databricksconnect/logo-64x64.png
+
+CMD [ "sleep", "infinity" ]

@@ -1,0 +1,42 @@
+parameters:
+  subscriptionId: ""
+  serviceConnection: ""
+  businessUnit: "contoso"
+  serviceName: "deco"
+  environment: ""
+  region: ""
+  tags: ""
+  databricksClusterSparkVersion: "7.3.x-cpu-ml-scala2.12"
+  databricksClusterNodeType: "Standard_F8s"
+  databricksClusterName: 
+  databricksClusterMinWorkers: 2
+  databricksClusterMaxWorkers: 8
+  databricksClusterAutoTerminationMinutes: 60
+jobs:
+  - job: DeployDatabricksCluster
+    displayName: Deploy Databricks Cluster 
+    steps:
+      - task: AzureCLI@2
+        displayName: Deploy Databricks Cluster 
+        inputs:
+          azureSubscription: ${{ parameters.serviceConnection }}
+          scriptType: "bash"
+          addSpnToEnvironment: "true"
+          scriptLocation: "scriptPath"
+          scriptPath: "./pipelines/utils/deploy-databricks.sh"
+          arguments: "-s ${{ parameters.subscriptionId}} \
+          -u ${{ parameters.businessUnit }} \
+          -a ${{ parameters.serviceName }} \
+          -e ${{ parameters.environment }} \
+          -r ${{ parameters.region }} \
+          -w \"${{ parameters.tags }}\" \
+          -n ${{ parameters.databricksClusterName }} \
+          -v ${{ parameters.databricksClusterSparkVersion }} \
+          -t ${{ parameters.databricksClusterNodeType }} \
+          -i ${{ parameters.databricksClusterMinWorkers }} \
+          -j ${{ parameters.databricksClusterMaxWorkers }} \
+          -q ${{ parameters.databricksClusterAutoTerminationMinutes }} "
+          
+          
+
+

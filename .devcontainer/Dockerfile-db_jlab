@@ -1,0 +1,47 @@
+# ARG for local image 
+ARG ACRLOGINSERVER=
+ARG PREFIX=data-dev-container_devcontainer_workspace
+ARG SEPARATOR=
+
+FROM $ACRLOGINSERVER$SEPARATOR$PREFIX-base:latest
+
+
+ARG USERNAME=userddc
+
+# now everything from here uses the normal user
+USER $USERNAME
+
+# configure az cli to automatically install extension
+RUN az config set extension.use_dynamic_install=yes_without_prompt
+
+# copy requirements
+COPY ./requirements_*.txt ./labextensions.txt /home/$USERNAME/
+
+# init conda and create all conda environments
+RUN  conda create -n db-jlab    python=3.7   -y
+
+# configure environment db-jlab and install extensions
+SHELL ["conda", "run", "-n", "db-jlab", "/bin/bash", "-c"]
+RUN pip install -r /home/$USERNAME/requirements_shared.txt \
+    && pip install -r /home/$USERNAME/requirements_db_jlab.txt \
+    && pip config set global.use-deprecated legacy-resolver \
+    && dj -b \
+    && pip config unset global.use-deprecated \
+    && cat /home/$USERNAME/labextensions.txt | xargs -I {} jupyter labextension install --no-build {} \
+    && jupyter lab build \
+    && jupyter serverextension enable --py jupyterlab_code_formatter
+
+# fix a black cache directory not creating automatically issue
+SHELL ["conda", "run", "-n", "db-jlab", "/bin/bash", "-c"]
+RUN mkdir -p /home/$USERNAME/.cache/black/$(black --version | cut -d' ' -f 3)
+
+# back to default shell
+SHELL ["/bin/sh", "-c"]
+
+# update jupyter logos
+COPY ./logos/databricks-logo-32x32.png /home/$USERNAME/.local/share/jupyter/kernels/databricksconnect/logo-32x32.png
+COPY ./logos/databricks-logo-64x64.png /home/$USERNAME/.local/share/jupyter/kernels/databricksconnect/logo-64x64.png
+COPY ./logos/localspark-logo-32x32.png /home/$USERNAME/.local/share/jupyter/kernels/localpyspark/logo-32x32.png
+COPY ./logos/localspark-logo-64x64.png /home/$USERNAME/.local/share/jupyter/kernels/localpyspark/logo-64x64.png
+
+CMD [ "sleep", "infinity" ]
