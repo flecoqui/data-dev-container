@@ -4,7 +4,7 @@
 - [Introduction](#introduction)
 - [Using Visual Studio Code with dev containers](#using-visual-studio-code-with-dev-containers)
 - [Azure DevOps Pipeline to deploy the dev container infrastructure](#azure-devops-pipeline-to-deploy-the-dev-container-infrastructure)
-- [Azure DevOps Pipeline to build and push the dev container images](#azure-devOps-pipeline-to-build-and-push-the-dev-container-images)
+- [Azure DevOps Pipeline to build, test and push the dev container images](#azure-devOps-pipeline-to-build-test-and-push-the-dev-container-images)
 - [Next steps](#next-steps)
 
 ## Introduction
@@ -435,7 +435,7 @@ The dev container infrastructure and the databricks cluster are now deployed, yo
 | pipelines/utils/deploy-acr.sh | Bash | Bash file used to deploy Azure Container Registry |
 | pipelines/utils/get-acr-info.sh | Bash | Bash file used to export  Azure Container Registry information (Password, Token, Name ) into the Variable Group "dev" once the container registry is deployed |
 
-## Azure DevOps Pipeline to build and push the dev container images
+## Azure DevOps Pipeline to build, test and push the dev container images
 
 ### **Pre-requisites**
 This pipeline will build the dev container images from the Azure DevOps repository and push those images to Azure Container Registry.
